@@ -21,8 +21,8 @@ app = Flask(__name__)
 def home():
    return render_template('index.html')
 
-@app.route("/movie", methods=["POST"])
-def movie_post():
+@app.route("/bucket", methods=["POST"])
+def bucket_post():
     url_receive = request.form['url_give']
     star_receive = request.form['star_give']
     comment_receive = request.form['comment_give']
@@ -45,13 +45,13 @@ def movie_post():
         'star': star_receive,
         'comment': comment_receive,
     }
-    db.movies.insert_one(doc)
+    db.bucket.insert_one(doc)
     return jsonify({'msg':'POST request!'})
 
-@app.route("/movie", methods=["GET"])
-def movie_get():
-    movie_list = list(db.movies.find({}, {'_id': False}))
-    return jsonify({'movies': movie_list})
+@app.route("/bucket", methods=["GET"])
+def bucket_get():
+    bucket_list = list(db.buckets.find({}, {'_id': False}))
+    return jsonify({'buckets': bucket_list})
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)

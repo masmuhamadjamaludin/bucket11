@@ -1,10 +1,9 @@
+from flask import Flask, render_template, request, jsonify
+from pymongo import MongoClient
+
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify
-from pymongo import MongoClient
-import requests
-from bs4 import BeautifulSoup
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -23,35 +22,36 @@ def home():
 
 @app.route("/bucket", methods=["POST"])
 def bucket_post():
-    url_receive = request.form['url_give']
-    star_receive = request.form['star_give']
-    comment_receive = request.form['comment_give']
-    headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'}
-    data = requests.get(url_receive,headers=headers)
-
-    soup = BeautifulSoup(data.text, 'html.parser')
-
-    og_image = soup.select_one('meta[property="og:image"]')
-    og_title = soup.select_one('meta[property="og:title"]')
-    og_description = soup.select_one('meta[property="og:description"]')
-
-    image = og_image['content']
-    title = og_title['content']
-    desc = og_description['content']
+    bucket_receive = request.form['bucket_give']
+    count = db.bucket.count_documents({})
+    num = count + 1
     doc = {
-        'image': image,
-        'title': title,
-        'description': desc,
-        'star': star_receive,
-        'comment': comment_receive,
+        'num' : num,
+        'bucket' : bucket_receive,
+        'done' : 0
     }
     db.bucket.insert_one(doc)
-    return jsonify({'msg':'POST request!'})
+    return jsonify({'msg': 'Data saved!'})
+
+@app.route("/bucket/done", methods=["POST"])
+def bucket_done():
+    num_receive = request.form['num_give']
+    db.bucket.update_one(
+        {'num' : int(num_receive)},
+        {'$set' : {'done' : 1}}
+    )
+    return jsonify({'msg': 'update done!'})
 
 @app.route("/bucket", methods=["GET"])
 def bucket_get():
-    bucket_list = list(db.buckets.find({}, {'_id': False}))
+    bucket_list = list(db.bucket.find({},{'_id' : False}))
     return jsonify({'buckets': bucket_list})
 
+@app.route("/bucket/delete", methods=["POST"])
+def delete():
+    num_delete = request.form['hapus_num']
+    db.bucket.delete_one({'num' : int(num_delete)})
+    return jsonify({'msg': 'delete done!'})
+
 if __name__ == '__main__':
-    app.run('0.0.0.0', port=5000, debug=True)
+   app.run('0.0.0.0', port=5000, debug=True)
